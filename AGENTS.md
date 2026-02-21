@@ -75,6 +75,32 @@ You are producing plain text that will later be styled by the CLI. Follow these 
 
 ---
 
+## Workflow Contract (Vibe Coding)
+
+- Work in tight loops: understand → implement → verify → commit → report.
+- Keep changes small and shippable per task; avoid “mega commits”.
+- Prefer pragmatic decisions that get to a working product fast; no over-engineering for V1.
+- If something is ambiguous, make the smallest reasonable assumption and clearly state it.
+
+## Git Workflow
+
+- Create a new branch at the start: `feat/oneshotprompts`.
+- After completing each task (and passing verification), commit the changes.
+- Use commit messages: `task(N): <short description>` (example: `task(3): add prisma schema and migrations`).
+- Do not amend commits unless explicitly requested.
+- Do not push unless explicitly requested.
+- If the repo already has a branching convention, follow it.
+
+## Stop Conditions (Don’t Get Stuck)
+
+- If a task requires external setup (Google OAuth, Stripe keys, DB URL) and values are missing:
+  - Implement scaffolding and placeholders.
+  - Add required env vars to `.env.example`.
+  - Add a short note in the task output describing what the user must provide.
+  - Then stop and ask for the missing values before continuing to tasks that require them.
+
+---
+
 # Product Summary
 
 OneShotPrompts helps vibe coders and non-technical builders create production-grade apps by:
