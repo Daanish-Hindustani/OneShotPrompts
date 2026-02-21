@@ -99,6 +99,15 @@ You are producing plain text that will later be styled by the CLI. Follow these 
   - Add a short note in the task output describing what the user must provide.
   - Then stop and ask for the missing values before continuing to tasks that require them.
 
+## Execution Loop
+
+1. Do the next task only.
+2. Implement smallest complete change.
+3. Run verification.
+4. Commit to the branch.
+5. Report what changed.
+6. Move to next task.
+
 ---
 
 # Product Summary
