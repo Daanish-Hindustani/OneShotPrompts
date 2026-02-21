@@ -103,7 +103,7 @@ You are producing plain text that will later be styled by the CLI. Follow these 
 
 1. Do the next task only.
 2. Implement smallest complete change.
-3. Run verification.
+3. Run verification(Add tests to test suit).
 4. Commit to the branch.
 5. Report what changed.
 6. Move to next task.
@@ -488,10 +488,12 @@ If single-app repo:
 
 - Execute tasks strictly in order: Task 1, then Task 2, etc.
 - For each task:
+  - Create a new feature branch
   - Restate the task goal in one sentence.
   - Identify the exact files you will create/edit.
   - Implement the smallest complete change that satisfies the task.
   - Run the verification steps listed for the task (or the closest equivalent).
+  - Add Tests
   - Only after verification passes, move to the next task.
 - If a task depends on missing configuration (e.g., Stripe keys, Google OAuth client id/secret), implement code scaffolding and clearly list required env vars; do not invent secrets.
 - If you discover a blocker, stop after explaining the blocker and what input is needed to proceed.
