@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { ensureUserByEmail } from "@/lib/entitlements";
 import { prisma } from "@/lib/db";
+import ProjectSettingsForm from "./project-settings-form";
 
 export default async function ProjectDetailPage({
   params,
@@ -47,14 +48,14 @@ export default async function ProjectDetailPage({
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
-      <div className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-20">
+      <div className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-20">
         <div className="flex flex-col gap-2">
           <p className="text-xs uppercase tracking-wide text-slate-500">
             {project.status}
           </p>
           <h1 className="text-3xl font-semibold">{project.title}</h1>
           <p className="text-sm text-slate-600">
-            Created {project.createdAt.toLocaleDateString("en-US")} · Updated {" "}
+            Created {project.createdAt.toLocaleDateString("en-US")} · Updated{" "}
             {project.updatedAt.toLocaleDateString("en-US")}
           </p>
         </div>
@@ -62,6 +63,18 @@ export default async function ProjectDetailPage({
         <div className="rounded-lg border border-slate-200 p-6 text-sm text-slate-600">
           Chat and project workflow will land here next.
         </div>
+
+        <section className="rounded-lg border border-slate-200 p-6">
+          <div className="mb-4">
+            <h2 className="text-sm font-semibold text-slate-900">
+              Project settings
+            </h2>
+            <p className="text-xs text-slate-500">
+              Update the project title or delete the project.
+            </p>
+          </div>
+          <ProjectSettingsForm projectId={project.id} title={project.title} />
+        </section>
       </div>
     </main>
   );
