@@ -105,11 +105,13 @@ You are producing plain text that will later be styled by the CLI. Follow these 
 
 1. Do the next task only.
 2. Implement smallest complete change.
-3. Run verification(Add tests to test suit).
-4. When asked to verify the app, run the webapp and fix any runtime/build errors found.
-5. Commit to the branch.
-6. Report what changed.
-7. Move to next task.
+3. Add tests for every new feature or behavior change (no silent skips).
+4. Add logs for new server-side flows or error handling paths.
+5. Run verification (tests + typecheck/lint if applicable).
+6. Compile and run the app; when asked to verify, also open the webapp and fix any runtime/build errors.
+7. Commit to the branch.
+8. Report what changed.
+9. Move to next task.
 
 ---
 
