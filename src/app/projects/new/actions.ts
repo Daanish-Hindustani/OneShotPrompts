@@ -5,12 +5,9 @@ import { redirect } from "next/navigation";
 
 import { authOptions } from "@/lib/auth";
 import {
+  createProjectWithEntitlement,
   ensureUserByEmail,
-  getCurrentMonthKey,
-  getProjectCreationEntitlement,
-  incrementProjectsCreated,
 } from "@/lib/entitlements";
-import { prisma } from "@/lib/db";
 import { validateProjectTitle } from "@/lib/projects";
 
 export type CreateProjectState = {
@@ -38,31 +35,24 @@ export async function createProjectAction(
     image: session.user?.image,
   });
 
-  const entitlement = await getProjectCreationEntitlement(user.id);
-  if (!entitlement.ok) {
-    const message =
-      entitlement.reason === "over_quota"
-        ? "Project quota exceeded for this month."
-        : "An active subscription is required to create projects.";
-    return { error: message };
-  }
-
   const rawTitle = String(formData.get("title") ?? "");
   const titleCheck = validateProjectTitle(rawTitle);
   if (!titleCheck.ok) {
     return { error: titleCheck.error };
   }
 
-  console.info("projects: creating project", { userId: user.id });
-  const project = await prisma.project.create({
-    data: {
-      userId: user.id,
-      title: titleCheck.value,
-    },
+  const creationResult = await createProjectWithEntitlement({
+    userId: user.id,
+    title: titleCheck.value,
   });
+  if (!creationResult.ok) {
+    const message =
+      creationResult.reason === "over_quota"
+        ? "Project quota exceeded for this month."
+        : "An active subscription is required to create projects.";
+    return { error: message };
+  }
 
-  const monthKey = getCurrentMonthKey();
-  await incrementProjectsCreated(user.id, monthKey);
-
-  redirect(`/projects/${project.id}`);
+  console.info("projects: creating project", { userId: user.id });
+  redirect(`/projects/${creationResult.projectId}`);
 }
