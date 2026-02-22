@@ -86,6 +86,91 @@ export async function incrementProjectsCreated(userId: string, month: string) {
   });
 }
 
+export async function createProjectWithEntitlement(input: {
+  userId: string;
+  title: string;
+  now?: Date;
+}): Promise<
+  | { ok: true; projectId: string }
+  | {
+      ok: false;
+      reason: "unsubscribed" | "over_quota";
+    }
+> {
+  const now = input.now ?? new Date();
+  const bypassTier = getBypassTier();
+  const monthKey = getCurrentMonthKey(now);
+
+  return prisma.$transaction(async (tx) => {
+    if (bypassTier) {
+      const project = await tx.project.create({
+        data: {
+          userId: input.userId,
+          title: input.title,
+        },
+      });
+      await tx.usageMeter.upsert({
+        where: { userId_month: { userId: input.userId, month: monthKey } },
+        update: { projectsCreatedCount: { increment: 1 } },
+        create: { userId: input.userId, month: monthKey, projectsCreatedCount: 1 },
+      });
+      return { ok: true as const, projectId: project.id };
+    }
+
+    const subscription = await tx.subscription.findFirst({
+      where: {
+        userId: input.userId,
+        status: "ACTIVE",
+        currentPeriodEnd: {
+          gte: now,
+        },
+      },
+      orderBy: [{ currentPeriodEnd: "desc" }, { updatedAt: "desc" }],
+    });
+
+    if (!subscription || !isSubscriptionActive(subscription, now)) {
+      console.warn("entitlements: inactive subscription", { userId: input.userId });
+      return { ok: false as const, reason: "unsubscribed" as const };
+    }
+
+    const limit = getTierProjectLimit(subscription.tier);
+    await tx.usageMeter.upsert({
+      where: { userId_month: { userId: input.userId, month: monthKey } },
+      update: {},
+      create: { userId: input.userId, month: monthKey },
+    });
+
+    const reservation = await tx.usageMeter.updateMany({
+      where: {
+        userId: input.userId,
+        month: monthKey,
+        projectsCreatedCount: { lt: limit },
+      },
+      data: {
+        projectsCreatedCount: { increment: 1 },
+      },
+    });
+
+    if (reservation.count === 0) {
+      console.warn("entitlements: project quota exceeded", {
+        userId: input.userId,
+        tier: subscription.tier,
+        limit,
+      });
+      return { ok: false as const, reason: "over_quota" as const };
+    }
+
+    const project = await tx.project.create({
+      data: {
+        userId: input.userId,
+        title: input.title,
+      },
+    });
+
+    return { ok: true as const, projectId: project.id };
+  });
+}
+
 export async function getProjectCreationEntitlement(
   userId: string,
   now = new Date()
