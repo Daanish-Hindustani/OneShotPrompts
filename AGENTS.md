@@ -84,7 +84,7 @@ You are producing plain text that will later be styled by the CLI. Follow these 
 
 ## Git Workflow
 
-- Create a new branch at the start: `feat/oneshotprompts`.
+- Create a new branch at the start: `codex/feat/onshotprompts/<what_it_being_done>`.
 - After completing each task (and passing verification), commit the changes.
 - Use commit messages: `task(N): <short description>` (example: `task(3): add prisma schema and migrations`).
 - Do not amend commits unless explicitly requested.
