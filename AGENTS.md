@@ -92,6 +92,7 @@ You are producing plain text that will later be styled by the CLI. Follow these 
 - If the repo already has a branching convention, follow it.
 - For every new task, create a new branch.
 - After finishing a task, push the branch and create a PR.
+- Before creating a PR, always check for merge conflicts by merging `origin/main` into your branch and resolve any conflicts.
 
 ## Stop Conditions (Don’t Get Stuck)
 

@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+  TRIALING
+}
+
+enum SubscriptionTier {
+  BASIC
+  PRO
+  TEAM
+}
+
+model User {
+  id        String        @id @default(cuid())
+  email     String        @unique
+  name      String?
+  image     String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  projects      Project[]
+  subscriptions Subscription[]
+  usageMeters   UsageMeter[]
+}
+
+model Project {
+  id        String        @id @default(cuid())
+  userId    String
+  title     String
+  status    ProjectStatus @default(DRAFT)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages     Message[]
+  requirements Requirement[]
+  plans        Plan[]
+
+  @@index([userId])
+}
+
+model Message {
+  id         String      @id @default(cuid())
+  projectId  String
+  role       MessageRole
+  content    String
+  tokenCount Int?
+  createdAt  DateTime    @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model Requirement {
+  id         String   @id @default(cuid())
+  projectId  String
+  contentMd  String
+  versionInt Int
+  approvedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@unique([projectId, versionInt])
+}
+
+model Plan {
+  id        String   @id @default(cuid())
+  projectId String
+  contentMd String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@unique([projectId])
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String
+  stripeCustomerId     String             @unique
+  stripeSubscriptionId String             @unique
+  status               SubscriptionStatus
+  tier                 SubscriptionTier
+  currentPeriodEnd     DateTime
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model UsageMeter {
+  id                   String   @id @default(cuid())
+  userId               String
+  month                String
+  projectsCreatedCount Int      @default(0)
+  openaiRequestsCount  Int      @default(0)
+  totalCharsIn         Int      @default(0)
+  totalCharsOut        Int      @default(0)
+  lastRequestAt        DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, month])
+  @@index([userId])
+}
