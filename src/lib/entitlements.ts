@@ -60,7 +60,7 @@ export async function getLatestSubscription(userId: string, now = new Date()) {
         gte: now,
       },
     },
-    orderBy: { updatedAt: "desc" },
+    orderBy: [{ currentPeriodEnd: "desc" }, { updatedAt: "desc" }],
   });
 }
 
@@ -130,7 +130,10 @@ export async function ensureUserByEmail(input: {
   console.info("users: ensuring user exists", { email: input.email });
   return prisma.user.upsert({
     where: { email: input.email },
-    update: {},
+    update: {
+      name: input.name ?? undefined,
+      image: input.image ?? undefined,
+    },
     create: {
       email: input.email,
       name: input.name ?? null,

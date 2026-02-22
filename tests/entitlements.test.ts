@@ -35,7 +35,7 @@ describe("entitlements data access", () => {
           gte: now,
         },
       },
-      orderBy: { updatedAt: "desc" },
+      orderBy: [{ currentPeriodEnd: "desc" }, { updatedAt: "desc" }],
     });
   });
 
@@ -52,11 +52,39 @@ describe("entitlements data access", () => {
 
     expect(upsert).toHaveBeenCalledWith({
       where: { email: "test@example.com" },
-      update: {},
+      update: {
+        name: "Test User",
+        image: "https://example.com/avatar.png",
+      },
       create: {
         email: "test@example.com",
         name: "Test User",
         image: "https://example.com/avatar.png",
+      },
+    });
+  });
+
+  it("does not overwrite existing profile fields with nullish values", async () => {
+    upsert.mockResolvedValueOnce({ id: "u1", email: "test@example.com" });
+
+    const { ensureUserByEmail } = await import("../src/lib/entitlements");
+
+    await ensureUserByEmail({
+      email: "test@example.com",
+      name: null,
+      image: undefined,
+    });
+
+    expect(upsert).toHaveBeenCalledWith({
+      where: { email: "test@example.com" },
+      update: {
+        name: undefined,
+        image: undefined,
+      },
+      create: {
+        email: "test@example.com",
+        name: null,
+        image: null,
       },
     });
   });
