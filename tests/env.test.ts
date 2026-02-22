@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getOptionalEnv, getRequiredEnv } from "../src/lib/env";
+import { getBypassTier } from "../src/lib/entitlements";
 
 describe("env helpers", () => {
   it("returns required values", () => {
@@ -17,5 +18,19 @@ describe("env helpers", () => {
   it("returns fallback for optional values", () => {
     delete process.env.OPTIONAL_TEST;
     expect(getOptionalEnv("OPTIONAL_TEST", "fallback")).toBe("fallback");
+  });
+
+  it("returns null when subscription bypass disabled", () => {
+    delete process.env.SUBSCRIPTION_BYPASS;
+    delete process.env.SUBSCRIPTION_BYPASS_TIER;
+    expect(getBypassTier()).toBeNull();
+  });
+
+  it("returns BASIC when subscription bypass enabled", () => {
+    process.env.SUBSCRIPTION_BYPASS = "true";
+    process.env.SUBSCRIPTION_BYPASS_TIER = "basic";
+    expect(getBypassTier()).toBe("BASIC");
+    delete process.env.SUBSCRIPTION_BYPASS;
+    delete process.env.SUBSCRIPTION_BYPASS_TIER;
   });
 });
