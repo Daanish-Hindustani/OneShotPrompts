@@ -1,3 +1,5 @@
+import AuthButtons from "@/app/_components/auth-buttons";
+
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
@@ -19,6 +21,9 @@ export default function HomePage() {
             Task 1 scaffold is in place. Next up: Google auth, billing gates,
             and the chat flow.
           </p>
+          <div>
+            <AuthButtons />
+          </div>
         </div>
       </div>
     </main>
