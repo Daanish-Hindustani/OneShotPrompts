@@ -88,6 +88,7 @@ You are producing plain text that will later be styled by the CLI. Follow these 
 - After completing each task (and passing verification), commit the changes.
 - Use commit messages: `task(N): <short description>` (example: `task(3): add prisma schema and migrations`).
 - Do not amend commits unless explicitly requested.
+- Do atomic commits
 - Do not push unless explicitly requested.
 - If the repo already has a branching convention, follow it.
 - For every new task, create a new branch.
