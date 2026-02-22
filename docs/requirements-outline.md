@@ -16,11 +16,15 @@ Build a paid, Google-authenticated web app that turns a chat-based requirements 
 - Stripe subscriptions + webhook updates
 - Server-side enforcement of entitlements and quotas
 - Rate limiting and message size caps
+- Subscription is considered active when `status=ACTIVE` and `currentPeriodEnd >= now`
+- Monthly quota tracked in `usage_meters` by `month` key in `YYYY-MM` (UTC)
 
 ## Non-Functional Requirements
 - Secure-by-default: authz checks, safe rendering, and no secrets in logs
 - Fast UX with streaming chat responses
 - Auditability: store generated artifacts and prompts per project
+- Dev-only subscription bypass allowed for local testing (disabled in production)
+- Stripe test mode supported before production launch
 
 ## Data Model (Minimum)
 - users, projects, messages, requirements, plans, subscriptions, usage_meters
