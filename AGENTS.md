@@ -90,6 +90,8 @@ You are producing plain text that will later be styled by the CLI. Follow these 
 - Do not amend commits unless explicitly requested.
 - Do not push unless explicitly requested.
 - If the repo already has a branching convention, follow it.
+- For every new task, create a new branch.
+- After finishing a task, push the branch and create a PR.
 
 ## Stop Conditions (Don’t Get Stuck)
 
