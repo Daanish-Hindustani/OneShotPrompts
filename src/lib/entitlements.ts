@@ -51,9 +51,15 @@ export function getBypassTier(): SubscriptionTier | null {
   return "BASIC";
 }
 
-export async function getLatestSubscription(userId: string) {
+export async function getLatestSubscription(userId: string, now = new Date()) {
   return prisma.subscription.findFirst({
-    where: { userId },
+    where: {
+      userId,
+      status: "ACTIVE",
+      currentPeriodEnd: {
+        gte: now,
+      },
+    },
     orderBy: { updatedAt: "desc" },
   });
 }
@@ -91,8 +97,8 @@ export async function getProjectCreationEntitlement(
     return { ok: true, tier: bypassTier, limit, used: 0, bypass: true };
   }
 
-  const subscription = await getLatestSubscription(userId);
-  if (!isSubscriptionActive(subscription, now)) {
+  const subscription = await getLatestSubscription(userId, now);
+  if (!subscription || !isSubscriptionActive(subscription, now)) {
     console.warn("entitlements: inactive subscription", { userId });
     return { ok: false, reason: "unsubscribed" };
   }
@@ -121,15 +127,11 @@ export async function ensureUserByEmail(input: {
   name?: string | null;
   image?: string | null;
 }) {
-  const existing = await prisma.user.findUnique({
+  console.info("users: ensuring user exists", { email: input.email });
+  return prisma.user.upsert({
     where: { email: input.email },
-  });
-
-  if (existing) return existing;
-
-  console.info("users: creating new user", { email: input.email });
-  return prisma.user.create({
-    data: {
+    update: {},
+    create: {
       email: input.email,
       name: input.name ?? null,
       image: input.image ?? null,
