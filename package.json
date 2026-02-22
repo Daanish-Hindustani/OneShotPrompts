@@ -9,9 +9,12 @@
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate"
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
     "@tailwindcss/postcss": "^4.2.0",
     "next": "latest",
     "react": "latest",
@@ -26,6 +29,7 @@
     "eslint-plugin-react": "latest",
     "eslint-plugin-react-hooks": "latest",
     "postcss": "latest",
+    "prisma": "^5.22.0",
     "tailwindcss": "latest",
     "typescript": "latest",
     "typescript-eslint": "latest",
