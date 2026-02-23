@@ -4,6 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { ensureUserByEmail } from "@/lib/entitlements";
 import { prisma } from "@/lib/db";
+import { listProjectMessages } from "@/lib/messages-data";
+import ProjectChat from "./project-chat";
 import ProjectSettingsForm from "./project-settings-form";
 
 export default async function ProjectDetailPage({
@@ -46,6 +48,11 @@ export default async function ProjectDetailPage({
     notFound();
   }
 
+  const messages = await listProjectMessages({
+    projectId: project.id,
+    userId: user.id,
+  });
+
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-20">
@@ -60,9 +67,15 @@ export default async function ProjectDetailPage({
           </p>
         </div>
 
-        <div className="rounded-lg border border-slate-200 p-6 text-sm text-slate-600">
-          Chat and project workflow will land here next.
-        </div>
+        <ProjectChat
+          projectId={project.id}
+          initialMessages={messages.map((message) => ({
+            id: message.id,
+            role: message.role,
+            content: message.content,
+            createdAt: message.createdAt.toISOString(),
+          }))}
+        />
 
         <section className="rounded-lg border border-slate-200 p-6">
           <div className="mb-4">
