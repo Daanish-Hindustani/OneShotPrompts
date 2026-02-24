@@ -19,6 +19,16 @@ function formatRole(role: ChatMessage["role"]) {
   return "System";
 }
 
+export function rollbackOptimisticMessages(
+  currentMessages: ChatMessage[],
+  userMessageId: string,
+  assistantMessageId: string
+) {
+  return currentMessages.filter(
+    (item) => item.id !== userMessageId && item.id !== assistantMessageId
+  );
+}
+
 export default function ProjectChat({
   projectId,
   initialMessages,
@@ -75,14 +85,18 @@ export default function ProjectChat({
         const payload = await response.json().catch(() => null);
         const errorMessage = payload?.error ?? "Unable to send message.";
         setError(errorMessage);
-        setMessages((prev) => prev.filter((item) => item.id !== assistantId));
+        setMessages((prev) =>
+          rollbackOptimisticMessages(prev, userMessage.id, assistantId)
+        );
         setIsSending(false);
         return;
       }
 
       if (!response.body) {
         setError("No response body received.");
-        setMessages((prev) => prev.filter((item) => item.id !== assistantId));
+        setMessages((prev) =>
+          rollbackOptimisticMessages(prev, userMessage.id, assistantId)
+        );
         setIsSending(false);
         return;
       }
@@ -112,7 +126,9 @@ export default function ProjectChat({
     } catch (err) {
       console.error("chat: failed to send message", err);
       setError("Unable to send message.");
-      setMessages((prev) => prev.filter((item) => item.id !== assistantId));
+      setMessages((prev) =>
+        rollbackOptimisticMessages(prev, userMessage.id, assistantId)
+      );
     } finally {
       setIsSending(false);
     }
