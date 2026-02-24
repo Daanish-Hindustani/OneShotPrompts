@@ -10,13 +10,9 @@ import {
   listRecentProjectMessages,
 } from "@/lib/messages-data";
 import { validateMessageContent } from "@/lib/messages";
+import { OpenAIChatMessage, postOpenAIChatCompletions } from "@/lib/openai";
 
 const OPENAI_MODEL = "gpt-4o-mini";
-
-type OpenAIChatMessage = {
-  role: "system" | "user" | "assistant";
-  content: string;
-};
 
 function mapRole(role: "USER" | "ASSISTANT" | "SYSTEM"): OpenAIChatMessage["role"] {
   if (role === "USER") return "user";
@@ -115,22 +111,22 @@ export async function POST(
     })),
   ];
 
-  const openAiResponse = await fetch(
-    "https://api.openai.com/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: OPENAI_MODEL,
-        messages: openAiMessages,
-        temperature: 0.3,
-        stream: true,
-      }),
-    }
-  );
+  const openAiRequest = await postOpenAIChatCompletions({
+    apiKey,
+    model: OPENAI_MODEL,
+    messages: openAiMessages,
+    temperature: 0.3,
+    stream: true,
+  });
+
+  if (!openAiRequest.ok) {
+    return NextResponse.json(
+      { error: "OpenAI request failed." },
+      { status: 502 }
+    );
+  }
+
+  const openAiResponse = openAiRequest.response;
 
   if (!openAiResponse.ok || !openAiResponse.body) {
     const errorText = await openAiResponse.text().catch(() => "");
