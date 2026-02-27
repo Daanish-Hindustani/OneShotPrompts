@@ -134,28 +134,32 @@ V1 constraints:
 
 ---
 
-# Pricing + Entitlements (No Free Tier)
-
-No free tier. All users must be on a paid plan. Primary limiter is "projects" (distinct chats that can generate a requirements + plan artifact).
+# Pricing + Entitlements
 
 ## Plans (Project Limits)
-- Basic: 5 projects / month
+- Free: 1 project / month
+- Basic: 10 projects / month
 - Pro: 20 projects / month
-- Team: 100 projects / month
 
 ## Pricing (Profit-Oriented Defaults)
 
 Set pricing to keep margins healthy even with heavy LLM usage and to avoid becoming a "cheap tokens reseller".
 
-- Basic: $29/month
-  - For individuals experimenting seriously
-  - 5 projects/month keeps support and LLM cost bounded
-- Pro: $99/month
-  - For builders shipping multiple apps
-  - 20 projects/month; best value on a per-project basis
-- Team: $399/month
-  - For small teams; 100 projects/month
-  - Add per-seat later if needed; for V1 keep it simple
+- Free: $0/month
+  - For trial users
+  - 1 project/month
+  - High rate limiting
+  - Cheaper models only
+- Basic: $5/month
+  - For basic use
+  - 10 projects/month
+  - Low rate limiting
+  - Pro models
+- Pro: $10/month
+  - For power users
+  - 20 projects/month
+  - Ultra-low rate limiting
+  - Pro models
 
 Notes:
 - Use "monthly reset" project counters; no rollovers in V1.
@@ -193,7 +197,7 @@ Notes:
 - Requirements approval ("Looks good")
 - Markdown plan generation (editable view)
 - Download Markdown plan
-- Billing: Stripe subscriptions (Basic/Pro/Team) with server-side enforcement
+- Billing: Stripe subscriptions (Free/Basic/Pro) with server-side enforcement
 - Rate limiting:
   - per user (session/user_id)
   - per IP (abuse control)
@@ -257,7 +261,7 @@ If the repo already has a different stack, preserve it and adapt.
 
 - OpenAI: generate requirements + plan
 - Google OAuth: login
-- Stripe: subscriptions (Basic/Pro/Team)
+- Stripe: subscriptions (Free/Basic/Pro)
 - Postgres provider: Neon or Supabase
 - Rate-limit store: Upstash Redis / Vercel KV
 - (Later) Sentry: errors + performance
@@ -381,13 +385,13 @@ If single-app repo:
   - Migrations apply cleanly; basic CRUD works
 
 ## Task 4: Subscription Gating + Tier Entitlements
-- Goal: Require an active subscription and enforce tier limits (Basic 5 / Pro 20 / Team 100 projects per month)
+- Goal: Enforce tier limits (Free 1 / Basic 10 / Pro 20 projects per month)
 - Outputs:
   - Tier definitions in code
-  - Middleware/helpers that block access when unsubscribed
+  - Middleware/helpers that block access based on subscription status/tier
   - Server-side quota check on project creation and generation endpoints
 - Verify:
-  - Unsubscribed user cannot create projects
+  - Free users are limited to 1 project/month
   - Quota enforcement blocks project creation after limit
 
 ## Task 5: Projects CRUD
@@ -424,7 +428,7 @@ If single-app repo:
   - Downloaded file matches edited version
 
 ## Task 9: Stripe Billing (Subscriptions)
-- Goal: Add Stripe subscriptions for Basic/Pro/Team and keep DB subscription state accurate
+- Goal: Add Stripe subscriptions for Free/Basic/Pro and keep DB subscription state accurate
 - Outputs:
   - Pricing page
   - Checkout flow
@@ -470,7 +474,7 @@ If single-app repo:
 # Acceptance Criteria (Definition of Done)
 
 - User can sign in with Google
-- User has an active paid subscription before creating projects
+- User tier is enforced before and during project creation/generation
 - User can create a project and chat with the agent
 - Agent produces an editable requirements summary; user approves
 - App generates an editable Markdown plan that includes:
@@ -484,7 +488,7 @@ If single-app repo:
 - Server-side enforcement of:
   - authz
   - subscription gating
-  - project quotas (Basic 5 / Pro 20 / Team 100 per month)
+  - project quotas (Free 1 / Basic 10 / Pro 20 per month)
   - rate limits
   - message size caps
 - Deployed to production (beta) on simplest hosting with DB and env vars configured

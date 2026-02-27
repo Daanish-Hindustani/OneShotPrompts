@@ -28,10 +28,7 @@ export default async function NewProjectPage() {
 
   const entitlement = await getProjectCreationEntitlement(user.id);
   if (!entitlement.ok) {
-    const message =
-      entitlement.reason === "over_quota"
-        ? "Project quota exceeded for this month."
-        : "An active subscription is required to create projects.";
+    const message = "Project quota exceeded for this month.";
 
     return (
       <main className="min-h-screen bg-white text-slate-900">
@@ -39,7 +36,7 @@ export default async function NewProjectPage() {
           <h1 className="text-3xl font-semibold">New project</h1>
           <p className="text-sm text-slate-600">{message}</p>
           <p className="text-sm text-slate-600">
-            You can create a new project once your subscription is active.
+            Upgrade your plan or wait until your monthly quota resets.
           </p>
         </div>
       </main>

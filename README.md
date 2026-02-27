@@ -33,9 +33,9 @@ GOOGLE_CLIENT_SECRET=
 DATABASE_URL=
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
+STRIPE_PRICE_FREE=
 STRIPE_PRICE_BASIC=
 STRIPE_PRICE_PRO=
-STRIPE_PRICE_TEAM=
 OPENAI_API_KEY=
 UPSTASH_REDIS_REST_URL=
 UPSTASH_REDIS_REST_TOKEN=
@@ -49,7 +49,7 @@ UPSTASH_REDIS_REST_TOKEN=
 - `DATABASE_URL`: create a Postgres database in [Neon](https://neon.tech/) or [Supabase](https://supabase.com/) and copy the connection string.
 - `STRIPE_SECRET_KEY`: from the [Stripe Dashboard](https://dashboard.stripe.com/apikeys).
 - `STRIPE_WEBHOOK_SECRET`: create a webhook endpoint in the [Stripe Dashboard](https://dashboard.stripe.com/webhooks) and copy the signing secret.
-- `STRIPE_PRICE_BASIC`, `STRIPE_PRICE_PRO`, `STRIPE_PRICE_TEAM`: create recurring monthly prices in Stripe and copy the price IDs.
+- `STRIPE_PRICE_FREE`, `STRIPE_PRICE_BASIC`, `STRIPE_PRICE_PRO`: create recurring monthly prices in Stripe and copy the price IDs.
 - `OPENAI_API_KEY`: from the [OpenAI API keys page](https://platform.openai.com/api-keys).
 - `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`: from your [Upstash Redis](https://upstash.com/) database REST credentials.
 

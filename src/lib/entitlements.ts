@@ -4,14 +4,14 @@ import { prisma } from "./db";
 import { getOptionalEnv } from "./env";
 
 const TIER_PROJECT_LIMITS: Record<SubscriptionTier, number> = {
-  BASIC: 5,
+  FREE: 1,
+  BASIC: 10,
   PRO: 20,
-  TEAM: 100,
 };
 
 export type EntitlementResult = {
   ok: boolean;
-  reason?: "unsubscribed" | "over_quota";
+  reason?: "over_quota";
   tier?: SubscriptionTier;
   limit?: number;
   used?: number;
@@ -44,7 +44,7 @@ export function getBypassTier(): SubscriptionTier | null {
   if (!flag || !["1", "true", "yes", "on"].includes(flag)) return null;
 
   const rawTier = getOptionalEnv("SUBSCRIPTION_BYPASS_TIER", "BASIC").toUpperCase();
-  if (rawTier === "PRO" || rawTier === "TEAM" || rawTier === "BASIC") {
+  if (rawTier === "FREE" || rawTier === "PRO" || rawTier === "BASIC") {
     return rawTier as SubscriptionTier;
   }
 
@@ -94,7 +94,7 @@ export async function createProjectWithEntitlement(input: {
   | { ok: true; projectId: string }
   | {
       ok: false;
-      reason: "unsubscribed" | "over_quota";
+      reason: "over_quota";
     }
 > {
   const now = input.now ?? new Date();
@@ -128,12 +128,11 @@ export async function createProjectWithEntitlement(input: {
       orderBy: [{ currentPeriodEnd: "desc" }, { updatedAt: "desc" }],
     });
 
-    if (!subscription || !isSubscriptionActive(subscription, now)) {
-      console.warn("entitlements: inactive subscription");
-      return { ok: false as const, reason: "unsubscribed" as const };
-    }
-
-    const limit = getTierProjectLimit(subscription.tier);
+    const tier =
+      subscription && isSubscriptionActive(subscription, now)
+        ? subscription.tier
+        : "FREE";
+    const limit = getTierProjectLimit(tier);
     await tx.usageMeter.upsert({
       where: { userId_month: { userId: input.userId, month: monthKey } },
       update: {},
@@ -153,7 +152,7 @@ export async function createProjectWithEntitlement(input: {
 
     if (reservation.count === 0) {
       console.warn("entitlements: project quota exceeded", {
-        tier: subscription.tier,
+        tier,
         limit,
       });
       return { ok: false as const, reason: "over_quota" as const };
@@ -182,12 +181,10 @@ export async function getProjectCreationEntitlement(
   }
 
   const subscription = await getLatestSubscription(userId, now);
-  if (!subscription || !isSubscriptionActive(subscription, now)) {
-    console.warn("entitlements: inactive subscription");
-    return { ok: false, reason: "unsubscribed" };
-  }
-
-  const tier = subscription.tier;
+  const tier =
+    subscription && isSubscriptionActive(subscription, now)
+      ? subscription.tier
+      : "FREE";
   const limit = getTierProjectLimit(tier);
   const monthKey = getCurrentMonthKey(now);
   const meter = await getUsageMeter(userId, monthKey);

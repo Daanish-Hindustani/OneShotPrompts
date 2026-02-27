@@ -33,4 +33,12 @@ describe("env helpers", () => {
     delete process.env.SUBSCRIPTION_BYPASS;
     delete process.env.SUBSCRIPTION_BYPASS_TIER;
   });
+
+  it("returns FREE when bypass tier is free", () => {
+    process.env.SUBSCRIPTION_BYPASS = "true";
+    process.env.SUBSCRIPTION_BYPASS_TIER = "free";
+    expect(getBypassTier()).toBe("FREE");
+    delete process.env.SUBSCRIPTION_BYPASS;
+    delete process.env.SUBSCRIPTION_BYPASS_TIER;
+  });
 });
