@@ -6,6 +6,8 @@ import { ensureUserByEmail } from "@/lib/entitlements";
 import { prisma } from "@/lib/db";
 import { listProjectMessages } from "@/lib/messages-data";
 import ProjectChat from "./project-chat";
+import ProjectPlanEditor from "./project-plan";
+import ProjectRequirements from "./project-requirements";
 import ProjectSettingsForm from "./project-settings-form";
 
 export default async function ProjectDetailPage({
@@ -52,6 +54,23 @@ export default async function ProjectDetailPage({
     projectId: project.id,
     userId: user.id,
   });
+  const requirement = await prisma.requirement.findFirst({
+    where: { projectId: project.id },
+    orderBy: { versionInt: "desc" },
+    select: {
+      id: true,
+      contentMd: true,
+      versionInt: true,
+      approvedAt: true,
+    },
+  });
+  const plan = await prisma.plan.findUnique({
+    where: { projectId: project.id },
+    select: {
+      id: true,
+      contentMd: true,
+    },
+  });
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
@@ -75,6 +94,32 @@ export default async function ProjectDetailPage({
             content: message.content,
             createdAt: message.createdAt.toISOString(),
           }))}
+        />
+
+        <ProjectRequirements
+          projectId={project.id}
+          initialRequirement={
+            requirement
+              ? {
+                  id: requirement.id,
+                  contentMd: requirement.contentMd,
+                  versionInt: requirement.versionInt,
+                  approvedAt: requirement.approvedAt?.toISOString() ?? null,
+                }
+              : null
+          }
+        />
+
+        <ProjectPlanEditor
+          projectId={project.id}
+          initialPlan={
+            plan
+              ? {
+                  id: plan.id,
+                  contentMd: plan.contentMd,
+                }
+              : null
+          }
         />
 
         <section className="rounded-lg border border-slate-200 p-6">

@@ -19,7 +19,8 @@
     "next": "latest",
     "next-auth": "^4.24.13",
     "react": "latest",
-    "react-dom": "latest"
+    "react-dom": "latest",
+    "stripe": "^20.4.0"
   },
   "devDependencies": {
     "@types/node": "latest",
