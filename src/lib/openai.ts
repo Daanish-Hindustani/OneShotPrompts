@@ -13,12 +13,14 @@ export async function postOpenAIChatCompletions({
   messages,
   temperature,
   stream,
+  signal,
 }: {
   apiKey: string;
   model: string;
   messages: OpenAIChatMessage[];
   temperature: number;
   stream: boolean;
+  signal?: AbortSignal;
 }): Promise<OpenAIChatCompletionResult> {
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -33,6 +35,7 @@ export async function postOpenAIChatCompletions({
         temperature,
         stream,
       }),
+      signal,
     });
 
     return { ok: true, response };

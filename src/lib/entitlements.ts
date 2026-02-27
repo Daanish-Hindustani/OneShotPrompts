@@ -129,7 +129,7 @@ export async function createProjectWithEntitlement(input: {
     });
 
     if (!subscription || !isSubscriptionActive(subscription, now)) {
-      console.warn("entitlements: inactive subscription", { userId: input.userId });
+      console.warn("entitlements: inactive subscription");
       return { ok: false as const, reason: "unsubscribed" as const };
     }
 
@@ -153,7 +153,6 @@ export async function createProjectWithEntitlement(input: {
 
     if (reservation.count === 0) {
       console.warn("entitlements: project quota exceeded", {
-        userId: input.userId,
         tier: subscription.tier,
         limit,
       });
@@ -184,7 +183,7 @@ export async function getProjectCreationEntitlement(
 
   const subscription = await getLatestSubscription(userId, now);
   if (!subscription || !isSubscriptionActive(subscription, now)) {
-    console.warn("entitlements: inactive subscription", { userId });
+    console.warn("entitlements: inactive subscription");
     return { ok: false, reason: "unsubscribed" };
   }
 
@@ -196,7 +195,6 @@ export async function getProjectCreationEntitlement(
 
   if (used >= limit) {
     console.warn("entitlements: project quota exceeded", {
-      userId,
       tier,
       limit,
       used,

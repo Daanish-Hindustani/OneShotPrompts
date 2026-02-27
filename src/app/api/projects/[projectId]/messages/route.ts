@@ -13,10 +13,13 @@ import { validateMessageContent } from "@/lib/messages";
 import { OpenAIChatMessage, postOpenAIChatCompletions } from "@/lib/openai";
 import { consumeRateLimitWithFallback, getClientIp } from "@/lib/rate-limit";
 import { selectMessagesForContext } from "@/lib/chat-context";
+import { isTrustedRequestOrigin } from "@/lib/security";
 
 const OPENAI_MODEL = "gpt-4o-mini";
 const MAX_ASSISTANT_CHARS = 8000;
 const MAX_CONTEXT_CHARS = 20_000;
+const MAX_REQUEST_BODY_BYTES = 16_000;
+const OPENAI_TIMEOUT_MS = 30_000;
 const CHAT_IP_RATE_LIMIT_PER_MINUTE = 60;
 const CHAT_USER_RATE_LIMIT_PER_MINUTE = 30;
 
@@ -38,7 +41,19 @@ export async function POST(
   request: Request,
   context: { params: Promise<{ projectId: string }> }
 ) {
+  if (!isTrustedRequestOrigin(request.headers)) {
+    return NextResponse.json({ error: "Forbidden origin." }, { status: 403 });
+  }
+
   const params = await context.params;
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (Number.isFinite(contentLength) && contentLength > MAX_REQUEST_BODY_BYTES) {
+    return NextResponse.json(
+      { error: "Request body is too large." },
+      { status: 413 }
+    );
+  }
+
   const clientIp = getClientIp(request);
   const ipLimit = await consumeRateLimitWithFallback({
     key: `chat:ip:${clientIp}`,
@@ -126,7 +141,7 @@ export async function POST(
     );
   }
 
-  console.info("chat: incoming message", { userId: user.id, projectId: project.id });
+  console.info("chat: incoming message");
 
   await createProjectMessage({
     projectId: project.id,
@@ -151,13 +166,17 @@ export async function POST(
     MAX_CONTEXT_CHARS
   ) satisfies OpenAIChatMessage[];
 
+  const abortController = new AbortController();
+  const timeout = setTimeout(() => abortController.abort(), OPENAI_TIMEOUT_MS);
   const openAiRequest = await postOpenAIChatCompletions({
     apiKey,
     model: OPENAI_MODEL,
     messages: openAiMessages,
     temperature: 0.3,
     stream: true,
+    signal: abortController.signal,
   });
+  clearTimeout(timeout);
 
   if (!openAiRequest.ok) {
     return NextResponse.json(
@@ -248,10 +267,7 @@ export async function POST(
               role: "ASSISTANT",
               content: assistantText.trim(),
             });
-            console.info("chat: assistant message saved", {
-              userId: user.id,
-              projectId: project.id,
-            });
+            console.info("chat: assistant message saved");
           } catch (error) {
             console.error("chat: failed to persist assistant message", error);
           }
