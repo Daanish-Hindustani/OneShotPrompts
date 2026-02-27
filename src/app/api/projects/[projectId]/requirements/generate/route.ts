@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { generateMarkdownFromMessages } from "@/lib/ai-generation";
 import { loadPromptTemplate } from "@/lib/prompt-loader";
 import { getOwnedProject, getAuthenticatedUser } from "@/lib/project-access";
-import { listProjectMessages } from "@/lib/messages-data";
+import { listRecentProjectMessages } from "@/lib/messages-data";
 import {
   createRequirementVersion,
   getLatestRequirement,
@@ -57,10 +57,25 @@ export async function POST(
     return NextResponse.json({ error: "Project not found." }, { status: 404 });
   }
 
-  const messages = await listProjectMessages({
+  let body: { reopen?: boolean };
+  try {
+    body = await request.json();
+  } catch {
+    body = {};
+  }
+
+  const latest = await getLatestRequirement(project.id);
+  if (latest?.approvedAt && !body.reopen) {
+    return NextResponse.json(
+      { error: "Approved requirements are immutable until reopened." },
+      { status: 409 }
+    );
+  }
+
+  const messages = await listRecentProjectMessages({
     projectId: project.id,
     userId: auth.user.id,
-    limit: 200,
+    limit: 400,
   });
 
   if (messages.length === 0) {
@@ -85,7 +100,6 @@ export async function POST(
     return NextResponse.json({ error: generated.error }, { status: 502 });
   }
 
-  const latest = await getLatestRequirement(project.id);
   const versionInt = latest ? latest.versionInt + 1 : 1;
 
   const requirement = await createRequirementVersion({
