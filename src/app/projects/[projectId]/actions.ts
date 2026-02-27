@@ -1,6 +1,7 @@
 "use server";
 
 import { getServerSession } from "next-auth";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@/lib/auth";
@@ -10,6 +11,8 @@ import {
   deleteProjectForUser,
   updateProjectTitleForUser,
 } from "@/lib/projects-data";
+import { consumeRateLimitWithFallback } from "@/lib/rate-limit";
+import { isTrustedRequestOrigin } from "@/lib/security";
 
 export type UpdateProjectState = {
   error?: string;
@@ -23,6 +26,11 @@ export async function updateProjectTitleAction(
   _prevState: UpdateProjectState,
   formData: FormData
 ): Promise<UpdateProjectState> {
+  const requestHeaders = await headers();
+  if (!isTrustedRequestOrigin(requestHeaders)) {
+    return { error: "Forbidden origin." };
+  }
+
   const session = await getServerSession(authOptions);
   if (!session) {
     redirect("/api/auth/signin?callbackUrl=/projects");
@@ -39,6 +47,14 @@ export async function updateProjectTitleAction(
     name: session.user?.name,
     image: session.user?.image,
   });
+  const rateLimit = await consumeRateLimitWithFallback({
+    key: `projects:update:${user.id}`,
+    limit: 40,
+    windowMs: 60_000,
+  });
+  if (!rateLimit.ok) {
+    return { error: "Too many requests. Try again shortly." };
+  }
 
   const projectId = String(formData.get("projectId") ?? "").trim();
   if (!projectId) {
@@ -61,7 +77,7 @@ export async function updateProjectTitleAction(
     return { error: "Project not found." };
   }
 
-  console.info("projects: updated project title", { userId: user.id, projectId });
+  console.info("projects: updated project title");
   redirect(`/projects/${projectId}`);
 }
 
@@ -69,6 +85,11 @@ export async function deleteProjectAction(
   _prevState: DeleteProjectState,
   formData: FormData
 ): Promise<DeleteProjectState> {
+  const requestHeaders = await headers();
+  if (!isTrustedRequestOrigin(requestHeaders)) {
+    return { error: "Forbidden origin." };
+  }
+
   const session = await getServerSession(authOptions);
   if (!session) {
     redirect("/api/auth/signin?callbackUrl=/projects");
@@ -85,6 +106,14 @@ export async function deleteProjectAction(
     name: session.user?.name,
     image: session.user?.image,
   });
+  const rateLimit = await consumeRateLimitWithFallback({
+    key: `projects:delete:${user.id}`,
+    limit: 20,
+    windowMs: 60_000,
+  });
+  if (!rateLimit.ok) {
+    return { error: "Too many requests. Try again shortly." };
+  }
 
   const projectId = String(formData.get("projectId") ?? "").trim();
   if (!projectId) {
@@ -100,6 +129,6 @@ export async function deleteProjectAction(
     return { error: "Project not found." };
   }
 
-  console.info("projects: deleted project", { userId: user.id, projectId });
+  console.info("projects: deleted project");
   redirect("/projects");
 }

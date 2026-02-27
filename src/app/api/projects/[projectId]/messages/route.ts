@@ -11,8 +11,17 @@ import {
 } from "@/lib/messages-data";
 import { validateMessageContent } from "@/lib/messages";
 import { OpenAIChatMessage, postOpenAIChatCompletions } from "@/lib/openai";
+import { consumeRateLimitWithFallback, getClientIp } from "@/lib/rate-limit";
+import { selectMessagesForContext } from "@/lib/chat-context";
+import { isTrustedRequestOrigin } from "@/lib/security";
 
 const OPENAI_MODEL = "gpt-4o-mini";
+const MAX_ASSISTANT_CHARS = 8000;
+const MAX_CONTEXT_CHARS = 20_000;
+const MAX_REQUEST_BODY_BYTES = 16_000;
+const OPENAI_TIMEOUT_MS = 30_000;
+const CHAT_IP_RATE_LIMIT_PER_MINUTE = 60;
+const CHAT_USER_RATE_LIMIT_PER_MINUTE = 30;
 
 function mapRole(role: "USER" | "ASSISTANT" | "SYSTEM"): OpenAIChatMessage["role"] {
   if (role === "USER") return "user";
@@ -30,8 +39,37 @@ function buildSystemPrompt(): OpenAIChatMessage {
 
 export async function POST(
   request: Request,
-  { params }: { params: { projectId: string } }
+  context: { params: Promise<{ projectId: string }> }
 ) {
+  if (!isTrustedRequestOrigin(request.headers)) {
+    return NextResponse.json({ error: "Forbidden origin." }, { status: 403 });
+  }
+
+  const params = await context.params;
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (Number.isFinite(contentLength) && contentLength > MAX_REQUEST_BODY_BYTES) {
+    return NextResponse.json(
+      { error: "Request body is too large." },
+      { status: 413 }
+    );
+  }
+
+  const clientIp = getClientIp(request);
+  const ipLimit = await consumeRateLimitWithFallback({
+    key: `chat:ip:${clientIp}`,
+    limit: CHAT_IP_RATE_LIMIT_PER_MINUTE,
+    windowMs: 60_000,
+  });
+  if (!ipLimit.ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Try again shortly." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(ipLimit.retryAfterSeconds ?? 1) },
+      }
+    );
+  }
+
   const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -51,6 +89,20 @@ export async function POST(
     name: session.user?.name,
     image: session.user?.image,
   });
+  const userLimit = await consumeRateLimitWithFallback({
+    key: `chat:user:${user.id}`,
+    limit: CHAT_USER_RATE_LIMIT_PER_MINUTE,
+    windowMs: 60_000,
+  });
+  if (!userLimit.ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Try again shortly." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(userLimit.retryAfterSeconds ?? 1) },
+      }
+    );
+  }
 
   const project = await prisma.project.findFirst({
     where: { id: params.projectId, userId: user.id },
@@ -89,7 +141,7 @@ export async function POST(
     );
   }
 
-  console.info("chat: incoming message", { userId: user.id, projectId: project.id });
+  console.info("chat: incoming message");
 
   await createProjectMessage({
     projectId: project.id,
@@ -103,21 +155,28 @@ export async function POST(
     limit: 24,
   });
 
-  const openAiMessages: OpenAIChatMessage[] = [
-    buildSystemPrompt(),
-    ...history.map((message) => ({
-      role: mapRole(message.role),
-      content: message.content,
-    })),
-  ];
+  const openAiMessages = selectMessagesForContext(
+    [
+      buildSystemPrompt(),
+      ...history.map((message) => ({
+        role: mapRole(message.role),
+        content: message.content,
+      })),
+    ],
+    MAX_CONTEXT_CHARS
+  ) satisfies OpenAIChatMessage[];
 
+  const abortController = new AbortController();
+  const timeout = setTimeout(() => abortController.abort(), OPENAI_TIMEOUT_MS);
   const openAiRequest = await postOpenAIChatCompletions({
     apiKey,
     model: OPENAI_MODEL,
     messages: openAiMessages,
     temperature: 0.3,
     stream: true,
+    signal: abortController.signal,
   });
+  clearTimeout(timeout);
 
   if (!openAiRequest.ok) {
     return NextResponse.json(
@@ -148,9 +207,10 @@ export async function POST(
   const stream = new ReadableStream({
     async start(controller) {
       const reader = openAiResponse.body!.getReader();
+      let doneReading = false;
+      let streamErrored = false;
 
       try {
-        let doneReading = false;
         while (!doneReading) {
           const { value, done } = await reader.read();
           if (done) {
@@ -167,6 +227,7 @@ export async function POST(
             if (!trimmed.startsWith("data:")) continue;
             const data = trimmed.replace(/^data:\s*/, "");
             if (data === "[DONE]") {
+              doneReading = true;
               break;
             }
 
@@ -176,8 +237,18 @@ export async function POST(
               };
               const delta = payload.choices?.[0]?.delta?.content ?? "";
               if (delta) {
-                assistantText += delta;
-                controller.enqueue(encoder.encode(delta));
+                const remaining = MAX_ASSISTANT_CHARS - assistantText.length;
+                if (remaining <= 0) {
+                  doneReading = true;
+                  break;
+                }
+                const chunk = delta.slice(0, remaining);
+                assistantText += chunk;
+                controller.enqueue(encoder.encode(chunk));
+                if (assistantText.length >= MAX_ASSISTANT_CHARS) {
+                  doneReading = true;
+                  break;
+                }
               }
             } catch (error) {
               console.warn("chat: failed to parse openai chunk", error);
@@ -186,6 +257,7 @@ export async function POST(
         }
       } catch (error) {
         console.error("chat: streaming error", error);
+        streamErrored = true;
         controller.error(error);
       } finally {
         if (assistantText.trim()) {
@@ -195,15 +267,14 @@ export async function POST(
               role: "ASSISTANT",
               content: assistantText.trim(),
             });
-            console.info("chat: assistant message saved", {
-              userId: user.id,
-              projectId: project.id,
-            });
+            console.info("chat: assistant message saved");
           } catch (error) {
             console.error("chat: failed to persist assistant message", error);
           }
         }
-        controller.close();
+        if (!streamErrored) {
+          controller.close();
+        }
       }
     },
   });
