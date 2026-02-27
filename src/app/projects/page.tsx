@@ -57,16 +57,24 @@ export default async function ProjectsPage() {
           <div className="text-sm text-slate-600">
             {projects.length} project{projects.length === 1 ? "" : "s"}
           </div>
-          {entitlement.ok ? (
+          <div className="flex items-center gap-2">
             <Link
-              href="/projects/new"
-              className="inline-flex items-center justify-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+              href="/billing"
+              className="inline-flex items-center justify-center rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-800 transition hover:bg-slate-50"
             >
-              New project
+              Billing
             </Link>
-          ) : (
-            <span className="text-xs text-rose-600">{entitlementMessage}</span>
-          )}
+            {entitlement.ok ? (
+              <Link
+                href="/projects/new"
+                className="inline-flex items-center justify-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+              >
+                New project
+              </Link>
+            ) : (
+              <span className="text-xs text-rose-600">{entitlementMessage}</span>
+            )}
+          </div>
         </div>
 
         {projects.length === 0 ? (
