@@ -40,9 +40,7 @@ export default async function ProjectsPage() {
   });
 
   const entitlementMessage = !entitlement.ok
-    ? entitlement.reason === "over_quota"
-      ? "Project quota exceeded for this month."
-      : "An active subscription is required to create projects."
+    ? "Project quota exceeded for this month."
     : null;
 
   return (

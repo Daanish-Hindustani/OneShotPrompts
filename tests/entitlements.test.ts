@@ -137,7 +137,7 @@ describe("entitlements data access", () => {
       where: {
         userId: "user_123",
         month: "2026-01",
-        projectsCreatedCount: { lt: 5 },
+        projectsCreatedCount: { lt: 10 },
       },
       data: {
         projectsCreatedCount: { increment: 1 },
@@ -171,5 +171,32 @@ describe("entitlements data access", () => {
 
     expect(result).toEqual({ ok: false, reason: "over_quota" });
     expect(txProjectCreate).not.toHaveBeenCalled();
+  });
+
+  it("defaults to FREE tier limit when no active subscription exists", async () => {
+    txSubscriptionFindFirst.mockResolvedValueOnce(null);
+    txUsageUpsert.mockResolvedValueOnce({});
+    txUsageUpdateMany.mockResolvedValueOnce({ count: 1 });
+    txProjectCreate.mockResolvedValueOnce({ id: "proj_free_1" });
+
+    const { createProjectWithEntitlement } = await import("../src/lib/entitlements");
+
+    const result = await createProjectWithEntitlement({
+      userId: "user_123",
+      title: "Free project",
+      now: new Date("2026-01-15T00:00:00.000Z"),
+    });
+
+    expect(result).toEqual({ ok: true, projectId: "proj_free_1" });
+    expect(txUsageUpdateMany).toHaveBeenCalledWith({
+      where: {
+        userId: "user_123",
+        month: "2026-01",
+        projectsCreatedCount: { lt: 1 },
+      },
+      data: {
+        projectsCreatedCount: { increment: 1 },
+      },
+    });
   });
 });

@@ -29,9 +29,9 @@ enum SubscriptionStatus {
 }
 
 enum SubscriptionTier {
+  FREE
   BASIC
   PRO
-  TEAM
 }
 
 model User {

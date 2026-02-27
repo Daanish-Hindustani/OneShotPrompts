@@ -62,10 +62,7 @@ export async function createProjectAction(
     title: titleCheck.value,
   });
   if (!creationResult.ok) {
-    const message =
-      creationResult.reason === "over_quota"
-        ? "Project quota exceeded for this month."
-        : "An active subscription is required to create projects.";
+    const message = "Project quota exceeded for this month.";
     return { error: message };
   }
 

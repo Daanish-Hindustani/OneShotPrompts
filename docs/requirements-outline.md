@@ -6,7 +6,21 @@ Build a paid, Google-authenticated web app that turns a chat-based requirements 
 ## Core Flows
 - New Project: user signs in, creates a project, chats with the agent, reviews and edits a requirements summary, approves it, then generates and edits a Markdown plan and downloads it.
 - Quota Enforcement: project creation and generation endpoints are blocked when the user exceeds their monthly project limit.
-- Billing: Stripe subscriptions (Basic/Pro/Team) gate access to all core features.
+- Billing: Stripe subscriptions (Free/Basic/Pro) gate access based on plan entitlements.
+
+## Pricing and Entitlements (V1)
+- Free (`$0/month`)
+- 1 project/month
+- High rate limiting
+- Cheaper models only
+- Basic (`$5/month`)
+- 10 projects/month
+- Low rate limiting
+- Pro models enabled
+- Pro (`$10/month`)
+- 20 projects/month
+- Ultra-low rate limiting
+- Pro models enabled
 
 ## Functional Requirements
 - Google OAuth sign-in with authenticated sessions
@@ -18,6 +32,8 @@ Build a paid, Google-authenticated web app that turns a chat-based requirements 
 - Rate limiting and message size caps
 - Subscription is considered active when `status=ACTIVE` and `currentPeriodEnd >= now`
 - Monthly quota tracked in `usage_meters` by `month` key in `YYYY-MM` (UTC)
+- Plan controls model tier access (`cheaper models` vs `pro models`)
+- Plan controls rate-limit tier (`high`, `low`, `ultra-low`)
 
 ## Non-Functional Requirements
 - Secure-by-default: authz checks, safe rendering, and no secrets in logs
