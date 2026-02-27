@@ -10,6 +10,7 @@ import {
   deleteProjectForUser,
   updateProjectTitleForUser,
 } from "@/lib/projects-data";
+import { consumeRateLimitWithFallback } from "@/lib/rate-limit";
 
 export type UpdateProjectState = {
   error?: string;
@@ -39,6 +40,14 @@ export async function updateProjectTitleAction(
     name: session.user?.name,
     image: session.user?.image,
   });
+  const rateLimit = await consumeRateLimitWithFallback({
+    key: `projects:update:${user.id}`,
+    limit: 40,
+    windowMs: 60_000,
+  });
+  if (!rateLimit.ok) {
+    return { error: "Too many requests. Try again shortly." };
+  }
 
   const projectId = String(formData.get("projectId") ?? "").trim();
   if (!projectId) {
@@ -85,6 +94,14 @@ export async function deleteProjectAction(
     name: session.user?.name,
     image: session.user?.image,
   });
+  const rateLimit = await consumeRateLimitWithFallback({
+    key: `projects:delete:${user.id}`,
+    limit: 20,
+    windowMs: 60_000,
+  });
+  if (!rateLimit.ok) {
+    return { error: "Too many requests. Try again shortly." };
+  }
 
   const projectId = String(formData.get("projectId") ?? "").trim();
   if (!projectId) {

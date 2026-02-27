@@ -9,6 +9,7 @@ import {
   ensureUserByEmail,
 } from "@/lib/entitlements";
 import { validateProjectTitle } from "@/lib/projects";
+import { consumeRateLimitWithFallback } from "@/lib/rate-limit";
 
 export type CreateProjectState = {
   error?: string;
@@ -34,6 +35,14 @@ export async function createProjectAction(
     name: session.user?.name,
     image: session.user?.image,
   });
+  const rateLimit = await consumeRateLimitWithFallback({
+    key: `projects:create:${user.id}`,
+    limit: 20,
+    windowMs: 60_000,
+  });
+  if (!rateLimit.ok) {
+    return { error: "Too many requests. Try again shortly." };
+  }
 
   const rawTitle = String(formData.get("title") ?? "");
   const titleCheck = validateProjectTitle(rawTitle);

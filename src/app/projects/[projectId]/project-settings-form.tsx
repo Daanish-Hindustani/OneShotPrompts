@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import * as React from "react";
+import { useFormStatus } from "react-dom";
 
 import type { DeleteProjectState, UpdateProjectState } from "./actions";
 import { deleteProjectAction, updateProjectTitleAction } from "./actions";
@@ -44,11 +45,11 @@ export default function ProjectSettingsForm({
   projectId: string;
   title: string;
 }) {
-  const [updateState, updateAction] = useFormState(
+  const [updateState, updateAction] = React.useActionState(
     updateProjectTitleAction,
     initialUpdateState
   );
-  const [deleteState, deleteAction] = useFormState(
+  const [deleteState, deleteAction] = React.useActionState(
     deleteProjectAction,
     initialDeleteState
   );

@@ -212,7 +212,7 @@ export async function ensureUserByEmail(input: {
   name?: string | null;
   image?: string | null;
 }) {
-  console.info("users: ensuring user exists", { email: input.email });
+  console.info("users: ensuring user exists");
   return prisma.user.upsert({
     where: { email: input.email },
     update: {
