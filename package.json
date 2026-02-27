@@ -8,13 +8,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && mkdir -p .next/types && if [ -f .next/dev/types/cache-life.d.ts ]; then cp .next/dev/types/cache-life.d.ts .next/types/cache-life.d.ts; fi && tsc --noEmit --incremental false",
     "test": "vitest run",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
+    "@sentry/nextjs": "^10.40.0",
     "@tailwindcss/postcss": "^4.2.0",
     "next": "latest",
     "next-auth": "^4.24.13",
