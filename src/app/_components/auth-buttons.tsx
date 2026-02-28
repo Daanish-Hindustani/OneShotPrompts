@@ -1,17 +1,41 @@
 "use client";
 
+import Link from "next/link";
 import { signIn, signOut, useSession } from "next-auth/react";
 
-export default function AuthButtons() {
+type AuthButtonsProps = {
+  variant?: "default" | "nav";
+};
+
+export default function AuthButtons({ variant = "default" }: AuthButtonsProps) {
   const { data: session, status } = useSession();
+  const isNav = variant === "nav";
 
   if (status === "loading") {
-    return (
-      <div className="text-sm text-slate-500">Checking session...</div>
-    );
+    return <div className="text-sm text-slate-500">Checking session...</div>;
   }
 
   if (session?.user) {
+    if (isNav) {
+      return (
+        <div className="flex flex-wrap items-center gap-5">
+          <Link
+            className="transition-opacity hover:opacity-60"
+            href="/projects"
+          >
+            Projects
+          </Link>
+          <button
+            className="transition-opacity hover:opacity-60"
+            onClick={() => signOut({ callbackUrl: "/" })}
+            type="button"
+          >
+            Sign out
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-sm text-slate-600">
@@ -25,6 +49,18 @@ export default function AuthButtons() {
           Sign out
         </button>
       </div>
+    );
+  }
+
+  if (isNav) {
+    return (
+      <button
+        className="text-sm font-medium text-slate-900 transition-opacity hover:opacity-60"
+        onClick={() => signIn("google", { callbackUrl: "/projects" })}
+        type="button"
+      >
+        Sign In
+      </button>
     );
   }
 
