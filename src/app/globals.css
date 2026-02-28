@@ -8,3 +8,35 @@ body {
   margin: 0;
   font-family: "Source Serif 4", "Iowan Old Style", "Palatino", "Times New Roman", serif;
 }
+
+.landing-hero {
+  background-color: #ffffff;
+  background-image:
+    radial-gradient(circle at 12% 40%, rgba(210, 229, 124, 0.52) 0, rgba(210, 229, 124, 0.24) 16%, transparent 34%),
+    radial-gradient(circle at 83% 12%, rgba(246, 220, 126, 0.42) 0, rgba(246, 220, 126, 0.2) 16%, transparent 34%),
+    radial-gradient(circle at 66% 78%, rgba(247, 169, 206, 0.4) 0, rgba(247, 169, 206, 0.18) 14%, transparent 30%),
+    radial-gradient(circle, rgba(193, 207, 98, 0.22) 0 1.1px, transparent 1.3px),
+    radial-gradient(circle, rgba(241, 209, 116, 0.2) 0 1px, transparent 1.25px),
+    radial-gradient(circle, rgba(240, 155, 194, 0.2) 0 1px, transparent 1.25px);
+  background-size:
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    8px 8px,
+    9px 9px,
+    8px 8px;
+  background-position:
+    0 0,
+    0 0,
+    0 0,
+    16% 40%,
+    80% 14%,
+    66% 78%;
+  background-repeat:
+    no-repeat,
+    no-repeat,
+    no-repeat,
+    repeat,
+    repeat,
+    repeat;
+}
