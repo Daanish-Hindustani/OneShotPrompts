@@ -3,6 +3,22 @@ const isDev = globalThis.process?.env.NODE_ENV !== "production";
 const scriptSrc = isDev
   ? "'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com"
   : "'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com";
+const sentryDsn = globalThis.process?.env.NEXT_PUBLIC_SENTRY_DSN?.trim();
+
+function getSentryConnectSrc() {
+  if (!sentryDsn) {
+    return "";
+  }
+
+  try {
+    const url = new globalThis.URL(sentryDsn);
+    return ` ${url.origin}`;
+  } catch {
+    return "";
+  }
+}
+
+const sentryConnectSrc = getSentryConnectSrc();
 
 const nextConfig = {
   reactStrictMode: true,
@@ -23,7 +39,7 @@ const nextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.openai.com https://accounts.google.com https://*.googleapis.com; frame-src https://accounts.google.com; font-src 'self' data:; base-uri 'self'; form-action 'self' https://accounts.google.com; frame-ancestors 'none'`,
+              `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.openai.com https://accounts.google.com https://*.googleapis.com${sentryConnectSrc}; frame-src https://accounts.google.com; font-src 'self' data:; base-uri 'self'; form-action 'self' https://accounts.google.com; frame-ancestors 'none'`,
           },
         ],
       },

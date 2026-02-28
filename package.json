@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
+    "@sentry/nextjs": "^10.40.0",
     "@tailwindcss/postcss": "^4.2.0",
     "next": "latest",
     "next-auth": "^4.24.13",
