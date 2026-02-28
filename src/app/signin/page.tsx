@@ -34,15 +34,15 @@ export default async function SignInPage({
     <main className="min-h-screen bg-white text-black">
       <div className="grid min-h-screen lg:grid-cols-[1.15fr_0.85fr]">
         <section className="landing-hero flex flex-col px-6 py-8 sm:px-10 lg:px-14 lg:py-12">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-start justify-between gap-3 sm:items-center sm:gap-4">
             <Link
-              className="text-3xl font-black uppercase leading-[1.05] tracking-[-0.03em] sm:text-4xl lg:text-5xl"
+              className="pr-2 text-3xl font-black uppercase leading-[1.05] tracking-[-0.03em] sm:text-4xl lg:text-5xl"
               href="/"
             >
               One Shot Prompts
             </Link>
             <Link
-              className="inline-flex h-11 items-center justify-center rounded-full border border-black/10 bg-white/70 px-5 text-sm font-semibold text-black/70 backdrop-blur-sm transition hover:border-black/20 hover:bg-white hover:text-black"
+              className="inline-flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-black/10 bg-white/70 px-4 text-sm font-semibold text-black/70 backdrop-blur-sm transition hover:border-black/20 hover:bg-white hover:text-black sm:h-11 sm:px-5"
               href="/"
             >
               Back home
