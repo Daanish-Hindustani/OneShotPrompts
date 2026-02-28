@@ -14,17 +14,18 @@ import ProjectSettingsForm from "./project-settings-form";
 export default async function ProjectDetailPage({
   params,
 }: {
-  params: { projectId: string };
+  params: Promise<{ projectId: string }>;
 }) {
+  const { projectId } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session) {
-    redirect(`/api/auth/signin?callbackUrl=/projects/${params.projectId}`);
+    redirect(`/api/auth/signin?callbackUrl=/projects/${projectId}`);
   }
 
   const email = session.user?.email;
   if (!email) {
-    redirect(`/api/auth/signin?callbackUrl=/projects/${params.projectId}`);
+    redirect(`/api/auth/signin?callbackUrl=/projects/${projectId}`);
   }
 
   const user = await ensureUserByEmail({
@@ -35,7 +36,7 @@ export default async function ProjectDetailPage({
 
   const project = await prisma.project.findFirst({
     where: {
-      id: params.projectId,
+      id: projectId,
       userId: user.id,
     },
     select: {
