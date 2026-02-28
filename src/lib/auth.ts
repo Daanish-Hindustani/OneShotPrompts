@@ -17,4 +17,7 @@ export const authOptions: NextAuthOptions = {
       clientSecret: googleClientSecret,
     }),
   ],
+  pages: {
+    signIn: "/signin",
+  },
 };

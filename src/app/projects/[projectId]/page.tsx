@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { ensureUserByEmail } from "@/lib/entitlements";
 import { prisma } from "@/lib/db";
 import { listProjectMessages } from "@/lib/messages-data";
+import SignOutButton from "@/app/_components/sign-out-button";
 import ProjectChat from "./project-chat";
 import ProjectPlanEditor from "./project-plan";
 import ProjectRequirements from "./project-requirements";
@@ -84,6 +85,13 @@ export default async function ProjectDetailPage({
             Created {project.createdAt.toLocaleDateString("en-US")} · Updated{" "}
             {project.updatedAt.toLocaleDateString("en-US")}
           </p>
+        </div>
+
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-sm text-slate-600">Project workspace</span>
+          <div className="flex items-center gap-2">
+            <SignOutButton />
+          </div>
         </div>
 
         <ProjectChat

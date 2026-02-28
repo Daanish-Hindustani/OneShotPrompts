@@ -8,6 +8,7 @@ import {
   getProjectCreationEntitlement,
 } from "@/lib/entitlements";
 import { prisma } from "@/lib/db";
+import SignOutButton from "@/app/_components/sign-out-button";
 
 export default async function ProjectsPage() {
   const session = await getServerSession(authOptions);
@@ -64,6 +65,7 @@ export default async function ProjectsPage() {
             >
               Billing
             </Link>
+            <SignOutButton />
             {entitlement.ok ? (
               <Link
                 href="/projects/new"
